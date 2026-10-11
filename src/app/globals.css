@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #050607;
+  --color-panel: #121418;
+  --color-panel-2: #1a1d22;
+  --color-line: #262a31;
+  --color-muted: #8b919c;
+  --color-neon: #19e6e6;
+  --color-lime: #39ff88;
+  --color-gold: #ffc21a;
+  --color-danger: #ff3b4f;
+  --font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--color-ink);
+  color: #f3f4f6;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+.wordmark {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: linear-gradient(180deg, #ffffff 0%, #d9fbff 45%, #7ef3f3 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 18px rgba(25, 230, 230, 0.25));
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(34, 37, 43, 0.85), rgba(20, 22, 26, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.neon-glow {
+  box-shadow: 0 0 24px rgba(25, 230, 230, 0.45), 0 0 64px rgba(57, 255, 136, 0.2);
+}
+
+.text-glow {
+  text-shadow: 0 0 18px rgba(25, 230, 230, 0.55);
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  70% { transform: scale(1.25); opacity: 0; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+.pulse-ring::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  border: 2px solid rgba(57, 255, 136, 0.6);
+  animation: pulse-ring 2s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+.safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 0.75rem); }

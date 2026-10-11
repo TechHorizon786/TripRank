@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "TripRank: dev server",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "serverReadyAction": {
+        "pattern": "- Local:.+(https?://\\S+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
+    },
+    {
+      "name": "TripRank: production build & start",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run build && npm run start"
+    },
+    {
+      "name": "TripRank: push schema + seed",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run setup"
+    }
+  ]
+}
