@@ -79,7 +79,7 @@ export default function TripSummary({ trip }: { trip: TripView }) {
       if (!blob) {
         blob = await toBlob(reportRef.current, {
           ...options,
-          filter: (node) => !(node.tagName === "IMG" && node.getAttribute("src")?.includes("basemaps.cartocdn.com")),
+          filter: (node) => !(node.tagName === "IMG" && node.getAttribute("src")?.includes("tile.openstreetmap.de")),
         });
       }
       if (!blob) throw new Error("The trip report image could not be generated.");

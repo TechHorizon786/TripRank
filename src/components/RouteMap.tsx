@@ -86,10 +86,16 @@ export default function RouteMap({ points, buckets }: { points: Pt[]; buckets: n
       {tiles.map((t) => (
         <img
           key={`${t.x}-${t.y}-${t.left}`}
-          src={`https://basemaps.cartocdn.com/dark_all/${z}/${t.x}/${t.y}@2x.png`}
+          src={`https://tile.openstreetmap.de/${z}/${t.x}/${t.y}.png`}
           alt=""
           className="absolute select-none"
-          style={{ left: pct(t.left), top: pct(t.top), width: pct(TILE), height: pct(TILE) }}
+          style={{
+            left: pct(t.left),
+            top: pct(t.top),
+            width: pct(TILE),
+            height: pct(TILE),
+            filter: "invert(1) hue-rotate(180deg) brightness(0.78) contrast(0.9) saturate(0.6)",
+          }}
           draggable={false}
           loading="lazy"
         />
@@ -103,7 +109,14 @@ export default function RouteMap({ points, buckets }: { points: Pt[]; buckets: n
         <circle cx={end.x} cy={end.y} r="9" fill="#ff3b4f" stroke="#fff" strokeWidth="3" />
         <text x={end.x + 15} y={end.y + 7} fill="#fff" fontSize="20" fontWeight="700" stroke="#000" strokeWidth="3" paintOrder="stroke">End</text>
       </svg>
-      <div className="absolute right-2 bottom-1 text-[9px] text-white/40">© OpenStreetMap © CARTO</div>
+      <a
+        href="https://www.openstreetmap.org/copyright"
+        target="_blank"
+        rel="noreferrer"
+        className="absolute right-2 bottom-1 rounded bg-black/50 px-1.5 py-0.5 text-[9px] text-white/60"
+      >
+        © OpenStreetMap contributors
+      </a>
     </div>
   );
 }
