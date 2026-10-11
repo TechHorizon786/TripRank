@@ -194,7 +194,7 @@ export default function TripSummary({ trip }: { trip: TripView }) {
           <button
             onClick={share}
             disabled={sharing}
-            className="flex-1 rounded-full bg-gradient-to-r from-lime to-neon py-4 font-bold tracking-widest text-black uppercase disabled:opacity-60"
+            className="flex-1 rounded-full bg-linear-to-r from-lime to-neon py-4 font-bold tracking-widest text-black uppercase disabled:opacity-60"
           >
             {sharing ? "Preparing image…" : "Share Trip"}
           </button>
