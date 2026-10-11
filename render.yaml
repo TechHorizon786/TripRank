@@ -4,7 +4,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run db:push && npm run start -- --hostname 0.0.0.0
     healthCheckPath: /api/health
     autoDeploy: true
