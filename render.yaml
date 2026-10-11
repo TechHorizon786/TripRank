@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: triprank
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run db:push && npm run start -- --hostname 0.0.0.0
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false

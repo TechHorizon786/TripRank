@@ -6,6 +6,11 @@ import BottomNav from "@/components/BottomNav";
 export const metadata: Metadata = {
   title: "TripRank — Track your drive. Rank your speed.",
   description: "Real-time GPS speed, G-force, 0-100 timing, global leaderboards and shareable trip cards.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-icon.png",
+  },
   appleWebApp: { capable: true, title: "TripRank", statusBarStyle: "black-translucent" },
 };
 
