@@ -18,8 +18,8 @@ body {
   background: var(--color-ink);
   color: #f3f4f6;
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior: none;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overscroll-behavior-y: auto;
 }
 
 .wordmark {
@@ -73,10 +73,23 @@ body {
 }
 
 .app-shell {
-  overflow-x: hidden;
+  overflow-x: clip;
   background:
     radial-gradient(ellipse at 50% 25%, rgba(31, 32, 38, 0.36), transparent 52%),
     #090a0c;
+}
+
+.onboarding-overlay {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  -webkit-overflow-scrolling: touch;
+}
+.onboarding-form {
+  max-height: 100%;
+  overflow-y: auto;
+  margin-block: auto;
 }
 
 .drive-dashboard {

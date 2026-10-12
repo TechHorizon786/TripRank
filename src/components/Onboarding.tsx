@@ -30,8 +30,8 @@ export default function Onboarding({ onDone }: { onDone: (p: LocalProfile) => vo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center">
-      <form onSubmit={submit} className="card w-full max-w-md rounded-b-none p-6 sm:rounded-b-[1.25rem]">
+    <div className="onboarding-overlay fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center">
+      <form onSubmit={submit} className="onboarding-form card w-full max-w-md rounded-b-none p-6 sm:rounded-b-[1.25rem]">
         <h2 className="wordmark text-center text-4xl">TripRank</h2>
         <p className="mt-2 text-center text-sm text-muted">Create your driver profile to save trips and climb the leaderboard.</p>
         <div className="mt-6 space-y-3">
