@@ -71,7 +71,7 @@ export default function Onboarding({ onDone }: { onDone: (p: LocalProfile) => vo
         {err && <p className="mt-3 text-sm text-danger">{err}</p>}
         <button
           disabled={busy}
-          className="mt-6 w-full rounded-full bg-gradient-to-r from-lime to-neon py-4 font-bold tracking-widest text-black uppercase disabled:opacity-60"
+          className="mt-6 w-full rounded-full bg-linear-to-r from-lime to-neon py-4 font-bold tracking-widest text-black uppercase disabled:opacity-60"
         >
           {busy ? "Creating…" : "Let's drive"}
         </button>
