@@ -97,7 +97,7 @@ export default function VideoOverlay({ tripId, unit }: { tripId: string; unit: U
         <div className="mt-4">
           <div className="flex justify-between text-xs text-muted"><span>Uploading…</span><span>{progress}%</span></div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-panel-2">
-            <div className="h-full bg-gradient-to-r from-lime to-neon transition-all" style={{ width: `${progress}%` }} />
+            <div className="h-full bg-linear-to-r from-lime to-neon transition-all" style={{ width: `${progress}%` }} />
           </div>
         </div>
       )}
@@ -111,7 +111,7 @@ export default function VideoOverlay({ tripId, unit }: { tripId: string; unit: U
         <div className="mt-4 space-y-3">
           <video src={url} controls playsInline className="mx-auto max-h-[70vh] rounded-xl bg-black" />
           <div className="flex gap-2">
-            <a href={`${url}?download=1`} className="flex-1 rounded-full bg-gradient-to-r from-lime to-neon py-3 text-center text-sm font-bold text-black">
+            <a href={`${url}?download=1`} className="flex-1 rounded-full bg-linear-to-r from-lime to-neon py-3 text-center text-sm font-bold text-black">
               Download MP4
             </a>
             <button onClick={() => fileRef.current?.click()} className="rounded-full border border-line px-4 text-sm text-muted">
