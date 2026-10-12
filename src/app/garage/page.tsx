@@ -43,7 +43,7 @@ export default function GaragePage() {
   return (
     <div className="space-y-4 px-4 pt-6">
       <header className="flex items-center gap-4">
-        <div className="neon-glow flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-lime to-neon text-2xl font-black text-black">
+        <div className="neon-glow flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-lime to-neon text-2xl font-black text-black">
           {profile.username.slice(0, 1).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">

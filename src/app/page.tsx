@@ -186,8 +186,8 @@ export default function DriveScreen() {
               disabled={!profile || saving || status === "starting"}
               className={`pulse-ring relative h-20 w-full rounded-full text-xl font-black tracking-[0.25em] uppercase transition active:scale-[0.98] disabled:opacity-50 ${
                 sportsMode
-                  ? "pulse-ring-sports bg-gradient-to-r from-red-600 via-rose-500 to-orange-400 text-white shadow-[0_0_28px_rgba(255,59,79,0.3)]"
-                  : "neon-glow bg-gradient-to-r from-lime via-neon to-cyan-300 text-black"
+                  ? "pulse-ring-sports bg-linear-to-r from-red-600 via-rose-500 to-orange-400 text-white shadow-[0_0_28px_rgba(255,59,79,0.3)]"
+                  : "neon-glow bg-linear-to-r from-lime via-neon to-cyan-300 text-black"
               }`}
             >
               {saving ? "Saving trip…" : status === "starting" ? "Starting…" : `Start ${TRIP_MODE_DETAILS[mode].label}`}
