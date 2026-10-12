@@ -64,7 +64,8 @@ export function useTripMode(): [TripMode, (mode: TripMode) => void] {
     () => localStorage.getItem(MODE_KEY) ?? "",
     () => ""
   );
-  const mode = isTripMode(rawMode) ? rawMode : "sports";
+  const storedMode = parse<unknown>(rawMode);
+  const mode = isTripMode(storedMode) ? storedMode : "sports";
   const setMode = useCallback((nextMode: TripMode) => write(MODE_KEY, nextMode), []);
   return [mode, setMode];
 }
