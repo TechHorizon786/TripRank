@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { getTripDetail } from "@/lib/trips";
 import { ensureStorage, renderOverlay, STORAGE_DIR } from "@/lib/video";
 import { formatDistance, formatSpeed, ordinal, toUnit, unitLabel, type Unit } from "@/lib/metrics";
+import { isTripMode, TRIP_MODE_DETAILS } from "@/lib/modes";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -35,10 +36,12 @@ export async function POST(req: Request) {
   await writeFile(input, Buffer.from(await file.arrayBuffer()));
 
   const { trip, user, countryRank, globalRank } = detail;
-  const rankLine =
-    user.country && user.country !== "Global"
-      ? `${ordinal(countryRank)} fastest in ${user.country}`
-      : `${ordinal(globalRank)} fastest worldwide`;
+  const mode = isTripMode(trip.mode) ? trip.mode : "sports";
+  const rankLine = mode !== "sports"
+    ? `${TRIP_MODE_DETAILS[mode].label} · ${formatSpeed(trip.avgSpeedKmh, unit)} average`
+    : user.country && user.country !== "Global"
+      ? `${ordinal(countryRank ?? 0)} fastest in ${user.country}`
+      : `${ordinal(globalRank ?? 0)} fastest worldwide`;
 
   // Fire-and-forget background job; the client polls GET /api/video/:id
   void (async () => {

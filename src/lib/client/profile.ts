@@ -2,11 +2,13 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import type { Unit } from "@/lib/metrics";
+import { isTripMode, type TripMode } from "@/lib/modes";
 
 export type LocalProfile = { id: string; username: string; country: string; car: string | null };
 
 const PROFILE_KEY = "triprank.profile";
 const UNIT_KEY = "triprank.unit";
+const MODE_KEY = "triprank.mode";
 const EVT = "triprank:storage";
 
 function subscribe(callback: () => void) {
@@ -54,6 +56,17 @@ export function useUnit(): [Unit, (u: Unit) => void] {
   const unit = parse<Unit>(rawUnit) ?? "kmh";
   const set = useCallback((u: Unit) => write(UNIT_KEY, u), []);
   return [unit, set];
+}
+
+export function useTripMode(): [TripMode, (mode: TripMode) => void] {
+  const rawMode = useSyncExternalStore(
+    subscribe,
+    () => localStorage.getItem(MODE_KEY) ?? "",
+    () => ""
+  );
+  const mode = isTripMode(rawMode) ? rawMode : "sports";
+  const setMode = useCallback((nextMode: TripMode) => write(MODE_KEY, nextMode), []);
+  return [mode, setMode];
 }
 
 export async function createProfile(input: { username: string; country: string; car: string }) {

@@ -56,9 +56,10 @@ body {
   position: absolute;
   inset: -6px;
   border-radius: 9999px;
-  border: 2px solid rgba(57, 255, 136, 0.6);
+  border: 2px solid var(--pulse-ring-color, rgba(57, 255, 136, 0.6));
   animation: pulse-ring 2s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
 }
+.pulse-ring-sports { --pulse-ring-color: rgba(255, 59, 79, 0.7); }
 
 .tabular { font-variant-numeric: tabular-nums; }
 

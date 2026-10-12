@@ -7,6 +7,7 @@ import SpeedChart from "@/components/SpeedChart";
 import RouteMap from "@/components/RouteMap";
 import VideoOverlay from "@/components/VideoOverlay";
 import { useProfile, useUnit } from "@/lib/client/profile";
+import { TRIP_MODE_DETAILS, paceBandLabels, paceLabel, type TripMode } from "@/lib/modes";
 import {
   EXPECTED_AVG_KMH,
   SPEED_COLORS,
@@ -22,6 +23,7 @@ import {
 
 export type TripView = {
   id: string;
+  mode: TripMode;
   startedAt: string;
   durationSec: number;
   distanceKm: number;
@@ -34,8 +36,8 @@ export type TripView = {
   samples: { lat: number; lng: number; speed: number }[];
   isSimulated: boolean;
   user: { id: string; username: string; country: string; car: string | null };
-  globalRank: number;
-  countryRank: number;
+  globalRank: number | null;
+  countryRank: number | null;
 };
 
 const Icon = {
@@ -53,7 +55,9 @@ export default function TripSummary({ trip }: { trip: TripView }) {
   const [shareMessage, setShareMessage] = useState("");
   const isOwner = profile?.id === trip.user.id;
 
-  const buckets = speedBuckets(trip.topSpeedKmh);
+  const modeDetails = TRIP_MODE_DETAILS[trip.mode];
+  const isSports = trip.mode === "sports";
+  const buckets = isSports ? speedBuckets(trip.topSpeedKmh) : modeDetails.speedBands;
   const u = (v: number) => Math.round(toUnit(v, unit));
   const expectedSec = (trip.distanceKm / EXPECTED_AVG_KMH) * 3600;
   const diff = expectedSec - trip.durationSec;
@@ -62,6 +66,10 @@ export default function TripSummary({ trip }: { trip: TripView }) {
   const rank = hasCountry ? trip.countryRank : trip.globalRank;
   const rankSub = hasCountry ? `fastest in ${trip.user.country}` : "fastest worldwide";
   const accel = unit === "mph" ? trip.zeroToSixtySec : trip.zeroToHundredSec;
+  const tripPace = paceLabel(trip.mode, trip.avgSpeedKmh);
+  const rangeNames = trip.mode === "sports"
+    ? ["Low", "Moderate", "High", "Top"]
+    : paceBandLabels(trip.mode);
 
   const share = async () => {
     if (!reportRef.current || sharing) return;
@@ -85,7 +93,9 @@ export default function TripSummary({ trip }: { trip: TripView }) {
       if (!blob) throw new Error("The trip report image could not be generated.");
 
       const file = new File([blob], `triprank-${trip.id.slice(0, 8)}.png`, { type: "image/png" });
-      const text = `${formatSpeed(trip.topSpeedKmh, unit)} top speed · ${ordinal(rank)} ${rankSub} on TripRank`;
+      const text = isSports && rank !== null
+        ? `${formatSpeed(trip.topSpeedKmh, unit)} top speed · ${ordinal(rank)} ${rankSub} on TripRank`
+        : `${modeDetails.label} trip · ${formatDistance(trip.distanceKm, unit)} · ${formatSpeed(trip.avgSpeedKmh, unit)} average on TripRank`;
 
       if (navigator.share && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ files: [file], title: "TripRank trip report", text });
@@ -125,7 +135,8 @@ export default function TripSummary({ trip }: { trip: TripView }) {
         <section className="pt-2 pb-2 text-center">
           <h1 className="wordmark text-5xl">TripRank</h1>
           <p className="mt-2 text-xs text-muted">
-            @{trip.user.username}
+            <span className="mr-1">{modeDetails.icon} {modeDetails.label}</span>
+            · @{trip.user.username}
             {trip.user.car ? ` · ${trip.user.car}` : ""} · {new Date(trip.startedAt).toLocaleDateString()}
             {trip.isSimulated && <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] text-gold">DEMO</span>}
           </p>
@@ -134,15 +145,24 @@ export default function TripSummary({ trip }: { trip: TripView }) {
         <section className="card grid grid-cols-2 gap-y-8 px-4 py-7">
           <Metric icon={Icon.nav} value={formatDistance(trip.distanceKm, unit)} label="Distance" />
           <Metric icon={Icon.gauge} value={formatSpeed(trip.avgSpeedKmh, unit)} label="Avg Speed" />
-          <Metric icon={Icon.dial} value={formatSpeed(trip.topSpeedKmh, unit)} label="Max Speed" />
-          <Metric icon={Icon.trophy} value={ordinal(rank)} label={rankSub} gold />
+          <Metric icon={Icon.dial} value={formatSpeed(trip.topSpeedKmh, unit)} label={isSports ? "Max Speed" : "Peak Speed"} />
+          {isSports && rank !== null
+            ? <Metric icon={Icon.trophy} value={ordinal(rank)} label={rankSub} gold />
+            : <Metric icon={<path d="M12 3v18M3 12h18" />} value={tripPace ?? "—"} label="Average Pace" />}
         </section>
 
-        <section className="card grid grid-cols-3 divide-x divide-white/5 py-4 text-center">
-          <Mini value={formatDuration(trip.durationSec)} label="Duration" />
-          <Mini value={`${trip.maxGForce.toFixed(2)} G`} label="Max G-Force" />
-          <Mini value={accel ? `${accel.toFixed(2)}s` : "—"} label={unit === "mph" ? "0-60 mph" : "0-100 km/h"} />
-        </section>
+        {isSports ? (
+          <section className="card grid grid-cols-3 divide-x divide-white/5 py-4 text-center">
+            <Mini value={formatDuration(trip.durationSec)} label="Duration" />
+            <Mini value={`${trip.maxGForce.toFixed(2)} G`} label="Max G-Force" />
+            <Mini value={accel ? `${accel.toFixed(2)}s` : "—"} label={unit === "mph" ? "0-60 mph" : "0-100 km/h"} />
+          </section>
+        ) : (
+          <section className="card grid grid-cols-2 divide-x divide-white/5 py-4 text-center">
+            <Mini value={formatDuration(trip.durationSec)} label="Duration" />
+            <Mini value={tripPace ?? "—"} label="Average Pace" />
+          </section>
+        )}
 
         <section className="card px-4 pt-5 pb-3">
           <h2 className="mb-2 font-semibold">Speed Over Time</h2>
@@ -152,13 +172,13 @@ export default function TripSummary({ trip }: { trip: TripView }) {
         <RouteMap points={trip.samples} buckets={buckets} />
 
         <section className="card px-5 py-5">
-          <h2 className="mb-3 font-semibold">Speed Ranges</h2>
+          <h2 className="mb-3 font-semibold">{isSports ? "Speed Ranges" : `${modeDetails.label} Pace Bands`}</h2>
           <ul className="space-y-2.5 text-sm text-white/85">
             {[
-              `< ${u(buckets[0])} ${unitLabel(unit)}`,
-              `${u(buckets[0])}-${u(buckets[1])} ${unitLabel(unit)}`,
-              `${u(buckets[1]) + 1}-${u(buckets[2])} ${unitLabel(unit)}`,
-              `> ${u(buckets[2])} ${unitLabel(unit)}`,
+              `${rangeNames[0]} · < ${u(buckets[0])} ${unitLabel(unit)}`,
+              `${rangeNames[1]} · ${u(buckets[0])}-${u(buckets[1])} ${unitLabel(unit)}`,
+              `${rangeNames[2]} · ${u(buckets[1]) + 1}-${u(buckets[2])} ${unitLabel(unit)}`,
+              `${rangeNames[3]} · > ${u(buckets[2])} ${unitLabel(unit)}`,
             ].map((label, i) => (
               <li key={i} className="flex items-center gap-4">
                 <span className="h-1.5 w-14 rounded-full" style={{ background: SPEED_COLORS[i] }} />
@@ -168,24 +188,30 @@ export default function TripSummary({ trip }: { trip: TripView }) {
           </ul>
         </section>
 
-        <section className="card px-5 py-5">
-          <h2 className="mb-3 font-semibold">Travel Time Comparison</h2>
-          <div className="grid grid-cols-3 items-center text-center">
-            <div>
-              <div className="text-3xl font-bold tabular">{formatDuration(expectedSec)}</div>
-              <div className="text-xs text-muted">Expected</div>
+        {isSports ? (
+          <section className="card px-5 py-5">
+            <h2 className="mb-3 font-semibold">Travel Time Comparison</h2>
+            <div className="grid grid-cols-3 items-center text-center">
+              <div>
+                <div className="text-3xl font-bold tabular">{formatDuration(expectedSec)}</div>
+                <div className="text-xs text-muted">Expected</div>
+              </div>
+              <div className={faster ? "text-lime" : "text-danger"}>
+                <div className="text-sm font-bold">{faster ? "▼" : "▲"} {formatDiff(diff)}</div>
+                <div className="text-xs">{faster ? "Faster" : "Slower"}</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold tabular">{formatDuration(trip.durationSec)}</div>
+                <div className="text-xs text-muted">Actual</div>
+              </div>
             </div>
-            <div className={faster ? "text-lime" : "text-danger"}>
-              <div className="text-sm font-bold">{faster ? "▼" : "▲"} {formatDiff(diff)}</div>
-              <div className="text-xs">{faster ? "Faster" : "Slower"}</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold tabular">{formatDuration(trip.durationSec)}</div>
-              <div className="text-xs text-muted">Actual</div>
-            </div>
-          </div>
-          <p className="mt-3 text-center text-[10px] text-white/30">Expected assumes a typical {Math.round(toUnit(EXPECTED_AVG_KMH, unit))} {unitLabel(unit)} average.</p>
-        </section>
+            <p className="mt-3 text-center text-[10px] text-white/30">Expected assumes a typical {Math.round(toUnit(EXPECTED_AVG_KMH, unit))} {unitLabel(unit)} average.</p>
+          </section>
+        ) : (
+          <p className="px-2 text-center text-[10px] text-white/40">
+            Pace bands are general references, not local speed limits.
+          </p>
+        )}
 
       </div>
 
@@ -194,13 +220,19 @@ export default function TripSummary({ trip }: { trip: TripView }) {
           <button
             onClick={share}
             disabled={sharing}
-            className="flex-1 rounded-full bg-linear-to-r from-lime to-neon py-4 font-bold tracking-widest text-black uppercase disabled:opacity-60"
+            className={`flex-1 rounded-full py-4 font-bold tracking-widest uppercase disabled:opacity-60 ${isSports ? "bg-linear-to-r from-red-500 to-orange-400 text-white" : "bg-linear-to-r from-lime to-neon text-black"}`}
           >
             {sharing ? "Preparing image…" : "Share Trip"}
           </button>
-          <Link href="/leaderboard" className="flex items-center rounded-full border border-line px-5 text-sm font-semibold text-white/80">
-            #{trip.globalRank} global
-          </Link>
+          {isSports && rank !== null ? (
+            <Link href="/leaderboard" className="flex items-center rounded-full border border-line px-5 text-sm font-semibold text-white/80">
+              #{rank} {hasCountry ? "country" : "global"}
+            </Link>
+          ) : (
+            <span className="flex items-center rounded-full border border-line px-4 text-xs font-semibold text-muted">
+              {modeDetails.label}
+            </span>
+          )}
         </div>
         {shareMessage && <p role="status" className="text-center text-xs text-muted">{shareMessage}</p>}
       </div>

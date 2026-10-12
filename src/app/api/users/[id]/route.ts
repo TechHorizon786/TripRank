@@ -21,6 +21,7 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/users/[id]">) {
       avgSpeedKmh: trips.avgSpeedKmh,
       maxGForce: trips.maxGForce,
       isSimulated: trips.isSimulated,
+      mode: trips.mode,
     })
     .from(trips)
     .where(eq(trips.userId, id))

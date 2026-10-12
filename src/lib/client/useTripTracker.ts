@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { G, KMH_PER_MPH, haversineKm } from "@/lib/metrics";
+import type { TripMode } from "@/lib/modes";
 
 export type Sample = { t: number; lat: number; lng: number; speed: number; g: number };
 export type Status = "idle" | "starting" | "tracking";
@@ -23,6 +24,7 @@ export type LiveStats = {
 };
 
 export type FinishedTrip = {
+  mode: TripMode;
   startedAt: number;
   durationSec: number;
   speedArray: number[];
@@ -85,6 +87,7 @@ export function useTripTracker() {
   });
   const cleanupRef = useRef<(() => void)[]>([]);
   const simRef = useRef({ lat: 48.8566, lng: 2.3522, heading: 35, v: 0, phase: 0, target: 230, turn: 0 });
+  const activeModeRef = useRef<TripMode>("sports");
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
 
   // ---- motion ------------------------------------------------------------
@@ -137,16 +140,26 @@ export function useTripTracker() {
   }, []);
 
   // ---- simulator ---------------------------------------------------------
-  const simStep = useCallback(() => {
+  const simStep = useCallback((mode: TripMode) => {
     const s = simRef.current;
+    const [minTarget, maxTarget] =
+      mode === "walking" ? [2, 8] :
+      mode === "cycling" ? [8, 35] :
+      mode === "bike" ? [20, 100] :
+      mode === "car" ? [20, 130] :
+      [60, 310];
     s.phase += 1;
     // occasionally pick a new target speed (traffic, braking zones, open autobahn)
     if (s.phase % 25 === 0) {
-      const r = Math.random();
-      s.target = r < 0.15 ? 60 + Math.random() * 40 : r < 0.3 ? 140 + Math.random() * 40 : 220 + Math.random() * 90;
+      if (mode === "sports") {
+        const r = Math.random();
+        s.target = r < 0.15 ? 60 + Math.random() * 40 : r < 0.3 ? 140 + Math.random() * 40 : 220 + Math.random() * 90;
+      } else {
+        s.target = minTarget + Math.random() * (maxTarget - minTarget);
+      }
     }
     const prevV = s.v;
-    const vmax = 320;
+    const vmax = maxTarget + 10;
     if (s.v < s.target) s.v += Math.max(0.8, 7.5 * (1 - s.v / vmax)) + Math.random() * 0.6; // km/h per s
     else s.v -= Math.min(12, (s.v - s.target) * 0.35 + 1);
     s.v = Math.max(0, s.v);
@@ -168,8 +181,8 @@ export function useTripTracker() {
   }, []);
 
   // ---- 1Hz aggregator ----------------------------------------------------
-  const tick = useCallback((isSim: boolean) => {
-    if (isSim) simStep();
+  const tick = useCallback((isSim: boolean, mode: TripMode) => {
+    if (isSim) simStep(mode);
     const fix = fixRef.current;
     if (!fix) return;
     const agg = aggRef.current;
@@ -283,30 +296,41 @@ export function useTripTracker() {
 
   /** Must be called from a user gesture (iOS motion permission). */
   const start = useCallback(
-    async (opts: { simulate?: boolean } = {}) => {
+    async (opts: { simulate?: boolean; mode?: TripMode } = {}) => {
       setError(null);
       reset();
       setStatus("starting");
       const isSim = !!opts.simulate;
+      const mode = opts.mode ?? "sports";
+      activeModeRef.current = mode;
       setSimulated(isSim);
       requestWakeLock();
 
       if (isSim) {
-        setSensors({ gps: true, motion: true });
-        const id = window.setInterval(() => tick(true), 1000 / SIM_WARP);
+        simRef.current.target =
+          mode === "walking" ? 5 :
+          mode === "cycling" ? 20 :
+          mode === "bike" ? 60 :
+          mode === "car" ? 80 :
+          250;
+        setSensors({ gps: true, motion: mode === "sports" });
+        const id = window.setInterval(() => tick(true, mode), 1000 / SIM_WARP);
         cleanupRef.current.push(() => clearInterval(id));
         setStatus("tracking");
         return;
       }
 
-      // Motion permission (iOS 13+ requires explicit request)
-      const DME = typeof DeviceMotionEvent !== "undefined" ? (DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }) : null;
-      let motionOk = !!DME;
-      if (DME?.requestPermission) {
-        try {
-          motionOk = (await DME.requestPermission()) === "granted";
-        } catch {
-          motionOk = false;
+      let motionOk = false;
+      if (mode === "sports") {
+        // Motion permission (iOS 13+ requires explicit request)
+        const DME = typeof DeviceMotionEvent !== "undefined" ? (DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> }) : null;
+        motionOk = !!DME;
+        if (DME?.requestPermission) {
+          try {
+            motionOk = (await DME.requestPermission()) === "granted";
+          } catch {
+            motionOk = false;
+          }
         }
       }
       if (motionOk) {
@@ -337,11 +361,10 @@ export function useTripTracker() {
         { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
       );
       cleanupRef.current.push(() => navigator.geolocation.clearWatch(watchId));
-      const id = window.setInterval(() => tick(false), 1000);
+      const id = window.setInterval(() => tick(false, mode), 1000);
       cleanupRef.current.push(() => clearInterval(id));
       setStatus("tracking");
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onMotion, onPosition, tick, teardown]
   );
 
@@ -352,6 +375,7 @@ export function useTripTracker() {
     if (speeds.length < 2) return null;
     return {
       startedAt: aggRef.current.startedAt,
+      mode: activeModeRef.current,
       durationSec: speeds.length,
       speedArray: [...speeds],
       samples: [...samplesRef.current],

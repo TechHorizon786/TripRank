@@ -3,6 +3,7 @@ import { trips, users, type TripSample } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { submitScore, rankForScore } from "@/lib/leaderboard";
 import { accelTime, haversineKm, KMH_PER_MPH } from "@/lib/metrics";
+import { isTripMode } from "@/lib/modes";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ type Payload = {
   timestamp?: string | number; // trip start
   duration_sec?: number;
   simulated?: boolean;
+  mode?: string;
 };
 
 function isNum(n: unknown): n is number {
@@ -33,6 +35,8 @@ export async function POST(req: Request) {
 
   const [user] = await db.select().from(users).where(eq(users.id, user_id));
   if (!user) return Response.json({ error: "unknown user" }, { status: 404 });
+  const mode = body.mode === undefined ? "sports" : body.mode;
+  if (!isTripMode(mode)) return Response.json({ error: "invalid trip mode" }, { status: 400 });
 
   if (!Array.isArray(body.speed_array) || body.speed_array.length < 2 || !body.speed_array.every(isNum))
     return Response.json({ error: "speed_array must contain at least 2 numeric samples" }, { status: 400 });
@@ -71,6 +75,7 @@ export async function POST(req: Request) {
     .insert(trips)
     .values({
       userId: user.id,
+      mode,
       startedAt,
       endedAt: new Date(startedAt.getTime() + durationSec * 1000),
       durationSec,
@@ -86,11 +91,13 @@ export async function POST(req: Request) {
     })
     .returning();
 
-  await submitScore(user.id, user.country, topSpeedKmh);
-  const [globalRank, countryRank] = await Promise.all([
-    rankForScore(topSpeedKmh),
-    rankForScore(topSpeedKmh, user.country),
-  ]);
+  if (mode === "sports") await submitScore(user.id, user.country, topSpeedKmh);
+  const [globalRank, countryRank] = mode === "sports"
+    ? await Promise.all([
+        rankForScore(topSpeedKmh),
+        rankForScore(topSpeedKmh, user.country),
+      ])
+    : [null, null];
 
-  return Response.json({ trip: { id: trip.id }, globalRank, countryRank }, { status: 201 });
+  return Response.json({ trip: { id: trip.id, mode }, globalRank, countryRank }, { status: 201 });
 }

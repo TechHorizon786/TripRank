@@ -33,6 +33,7 @@ export const trips = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    mode: text("mode").notNull().default("sports"),
     startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
     endedAt: timestamp("ended_at", { withTimezone: true }).notNull(),
     durationSec: integer("duration_sec").notNull(),
@@ -50,6 +51,7 @@ export const trips = pgTable(
   (t) => [
     index("trips_user_idx").on(t.userId),
     index("trips_top_speed_idx").on(t.topSpeedKmh),
+    index("trips_mode_top_speed_idx").on(t.mode, t.topSpeedKmh),
   ]
 );
 

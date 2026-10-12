@@ -2,7 +2,7 @@
 
 import { toUnit, unitLabel, type Unit } from "@/lib/metrics";
 
-type Props = { speedKmh: number; maxKmh: number; unit: Unit; active: boolean };
+type Props = { speedKmh: number; maxKmh: number; unit: Unit; active: boolean; sportsMode?: boolean };
 
 const SIZE = 300;
 const R = 128;
@@ -10,7 +10,7 @@ const C = 2 * Math.PI * R;
 const SWEEP = 0.75; // 270°
 const stableCoord = (value: number) => Number(value.toFixed(3));
 
-export default function SpeedDial({ speedKmh, maxKmh, unit, active }: Props) {
+export default function SpeedDial({ speedKmh, maxKmh, unit, active, sportsMode = true }: Props) {
   const v = toUnit(speedKmh, unit);
   const top = toUnit(maxKmh, unit);
   const base = unit === "mph" ? 200 : 300;
@@ -25,9 +25,9 @@ export default function SpeedDial({ speedKmh, maxKmh, unit, active }: Props) {
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="absolute inset-0">
         <defs>
           <linearGradient id="dialGrad" x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0%" stopColor="#39ff88" />
-            <stop offset="60%" stopColor="#19e6e6" />
-            <stop offset="100%" stopColor="#7ef3ff" />
+            <stop offset="0%" stopColor={sportsMode ? "#ff3b4f" : "#39ff88"} />
+            <stop offset="60%" stopColor={sportsMode ? "#ff7043" : "#19e6e6"} />
+            <stop offset="100%" stopColor={sportsMode ? "#ffb36b" : "#7ef3ff"} />
           </linearGradient>
           <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="6" result="b" />
@@ -71,7 +71,7 @@ export default function SpeedDial({ speedKmh, maxKmh, unit, active }: Props) {
           const y2 = stableCoord(cx + r2 * Math.sin(ang));
           return (
             <g key={i}>
-              <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={i / 10 <= frac ? "#19e6e6" : "#3a3f48"} strokeWidth="2" />
+              <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={i / 10 <= frac ? (sportsMode ? "#ff7043" : "#19e6e6") : "#3a3f48"} strokeWidth="2" />
               {i % 2 === 0 && (
                 <text x={stableCoord(cx + (R - 50) * Math.cos(ang))} y={stableCoord(cx + (R - 50) * Math.sin(ang) + 4)} textAnchor="middle" fontSize="11" fill="#6b717c" className="tabular">
                   {Math.round((i / 10) * scale)}
@@ -85,7 +85,7 @@ export default function SpeedDial({ speedKmh, maxKmh, unit, active }: Props) {
         <div className={`text-[84px] leading-none font-extrabold tabular tracking-tight ${active ? "text-white text-glow" : "text-white/80"}`}>
           {Math.round(v)}
         </div>
-        <div className="mt-1 text-sm font-semibold tracking-[0.3em] text-neon uppercase">{unitLabel(unit)}</div>
+        <div className={`mt-1 text-sm font-semibold tracking-[0.3em] uppercase ${sportsMode ? "text-danger" : "text-neon"}`}>{unitLabel(unit)}</div>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useProfile, useUnit } from "@/lib/client/profile";
 import { formatDistance, formatDuration, formatSpeed } from "@/lib/metrics";
 import Onboarding from "@/components/Onboarding";
+import { isTripMode, TRIP_MODE_DETAILS, type TripMode } from "@/lib/modes";
 
 type TripRow = {
   id: string;
@@ -15,6 +16,7 @@ type TripRow = {
   avgSpeedKmh: number;
   maxGForce: number;
   isSimulated: number;
+  mode: string;
 };
 
 export default function GaragePage() {
@@ -33,9 +35,10 @@ export default function GaragePage() {
   if (ready && !profile) return <Onboarding onDone={() => {}} />;
   if (!profile) return null;
 
-  const best = trips?.reduce((m, t) => Math.max(m, t.topSpeedKmh), 0) ?? 0;
+  const sportsTrips = trips?.filter((trip) => !isTripMode(trip.mode) || trip.mode === "sports") ?? [];
+  const best = sportsTrips.reduce((m, t) => Math.max(m, t.topSpeedKmh), 0);
   const totalKm = trips?.reduce((m, t) => m + t.distanceKm, 0) ?? 0;
-  const bestG = trips?.reduce((m, t) => Math.max(m, t.maxGForce), 0) ?? 0;
+  const bestG = sportsTrips.reduce((m, t) => Math.max(m, t.maxGForce), 0);
 
   return (
     <div className="space-y-4 px-4 pt-6">
@@ -53,7 +56,7 @@ export default function GaragePage() {
       </header>
 
       <section className="card grid grid-cols-3 divide-x divide-white/5 py-4 text-center">
-        <div><div className="text-lg font-bold text-neon tabular">{formatSpeed(best, unit)}</div><div className="text-[10px] tracking-widest text-muted uppercase">PB Speed</div></div>
+        <div><div className="text-lg font-bold text-danger tabular">{formatSpeed(best, unit)}</div><div className="text-[10px] tracking-widest text-muted uppercase">Sports PB</div></div>
         <div><div className="text-lg font-bold tabular">{formatDistance(totalKm, unit)}</div><div className="text-[10px] tracking-widest text-muted uppercase">Total</div></div>
         <div><div className="text-lg font-bold tabular">{bestG.toFixed(2)} G</div><div className="text-[10px] tracking-widest text-muted uppercase">Peak G</div></div>
       </section>
@@ -78,27 +81,31 @@ export default function GaragePage() {
         </div>
       ) : (
         <ul className="space-y-2">
-          {trips.map((t) => (
-            <li key={t.id}>
-              <Link href={`/trip/${t.id}`} className="card flex items-center gap-3 px-4 py-3 transition hover:border-neon/40">
-                <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-panel-2 text-[10px] text-muted">
-                  <span className="text-base leading-none font-bold text-white">{new Date(t.startedAt).getDate()}</span>
-                  {new Date(t.startedAt).toLocaleString(undefined, { month: "short" })}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold">
-                    {formatDistance(t.distanceKm, unit)} · {formatDuration(t.durationSec)}
-                    {t.isSimulated === 1 && <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] text-gold">DEMO</span>}
+          {trips.map((t) => {
+            const mode: TripMode = isTripMode(t.mode) ? t.mode : "sports";
+            const details = TRIP_MODE_DETAILS[mode];
+            return (
+              <li key={t.id}>
+                <Link href={`/trip/${t.id}`} className="card flex items-center gap-3 px-4 py-3 transition hover:border-neon/40">
+                  <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-panel-2 text-[10px] text-muted">
+                    <span className="text-base leading-none font-bold text-white">{new Date(t.startedAt).getDate()}</span>
+                    {new Date(t.startedAt).toLocaleString(undefined, { month: "short" })}
                   </div>
-                  <div className="text-xs text-muted">avg {formatSpeed(t.avgSpeedKmh, unit)} · {t.maxGForce.toFixed(2)} G</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-bold text-neon tabular">{formatSpeed(t.topSpeedKmh, unit)}</div>
-                  <div className="text-[10px] text-muted">top</div>
-                </div>
-              </Link>
-            </li>
-          ))}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold">
+                      {details.icon} {details.label} · {formatDistance(t.distanceKm, unit)} · {formatDuration(t.durationSec)}
+                      {t.isSimulated === 1 && <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] text-gold">DEMO</span>}
+                    </div>
+                    <div className="text-xs text-muted">avg {formatSpeed(t.avgSpeedKmh, unit)}{mode === "sports" ? ` · ${t.maxGForce.toFixed(2)} G` : ""}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`font-bold tabular ${mode === "sports" ? "text-danger" : "text-neon"}`}>{formatSpeed(t.topSpeedKmh, unit)}</div>
+                    <div className="text-[10px] text-muted">{mode === "sports" ? "top" : "peak"}</div>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
 

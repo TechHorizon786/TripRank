@@ -2,7 +2,7 @@ import "server-only";
 import Redis from "ioredis";
 import { db } from "@/db";
 import { trips, users } from "@/db/schema";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 /**
  * Redis-backed real-time leaderboard.
@@ -98,7 +98,7 @@ function bestPerUserQuery(limit: number, country?: string) {
     })
     .from(trips)
     .innerJoin(users, eq(users.id, trips.userId))
-    .where(country ? eq(users.country, country) : undefined)
+    .where(and(eq(trips.mode, "sports"), country ? eq(users.country, country) : undefined))
     .groupBy(users.id)
     .orderBy(desc(best))
     .limit(limit);
@@ -153,7 +153,7 @@ export async function rankForScore(topSpeedKmh: number, country?: string): Promi
     select count(*)::text as higher from (
       select t.user_id, max(t.top_speed_kmh) as best
       from trips t join users u on u.id = t.user_id
-      ${country ? sql`where u.country = ${country}` : sql``}
+      where t.mode = 'sports' ${country ? sql`and u.country = ${country}` : sql``}
       group by t.user_id
     ) b where b.best > ${topSpeedKmh}
   `);
@@ -169,7 +169,7 @@ export async function totalRanked(country?: string): Promise<number> {
   if (fromRedis !== undefined) return fromRedis;
   const res = await db.execute<{ n: string }>(sql`
     select count(distinct t.user_id)::text as n from trips t join users u on u.id = t.user_id
-    ${country ? sql`where u.country = ${country}` : sql``}
+    where t.mode = 'sports' ${country ? sql`and u.country = ${country}` : sql``}
   `);
   return Number(res.rows[0]?.n ?? 0);
 }

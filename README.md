@@ -1,6 +1,6 @@
 # TripRank
 
-TripRank is a GPS trip tracker built with Next.js, PostgreSQL, and Drizzle ORM.
+TripRank is a GPS trip tracker built with Next.js, PostgreSQL, and Drizzle ORM. It supports Sports, Walking, Cycling, Bike, and Car trip modes. Sports keeps the top-speed leaderboard; the other modes show activity-specific pace bands without ranking riders against one another. Vehicle pace bands are general references, not road-speed guidance.
 
 ## Run locally
 
