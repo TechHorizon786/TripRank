@@ -4,88 +4,164 @@ import { toUnit, unitLabel, type Unit } from "@/lib/metrics";
 
 type Props = { speedKmh: number; maxKmh: number; unit: Unit; active: boolean; sportsMode?: boolean };
 
-const SIZE = 300;
-const R = 128;
-const C = 2 * Math.PI * R;
-const SWEEP = 0.75; // 270°
+const SIZE = 420;
+const CENTER = SIZE / 2;
+const R = 184;
+const SWEEP = 0.75;
+const CIRCUMFERENCE = 2 * Math.PI * R;
+const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 const stableCoord = (value: number) => Number(value.toFixed(3));
 
+function pointAt(radius: number, fraction: number) {
+  const angle = ((135 + clamp01(fraction) * 270) * Math.PI) / 180;
+  return {
+    x: stableCoord(CENTER + radius * Math.cos(angle)),
+    y: stableCoord(CENTER + radius * Math.sin(angle)),
+  };
+}
+
 export default function SpeedDial({ speedKmh, maxKmh, unit, active, sportsMode = true }: Props) {
-  const v = toUnit(speedKmh, unit);
-  const top = toUnit(maxKmh, unit);
+  const value = toUnit(speedKmh, unit);
+  const peak = toUnit(maxKmh, unit);
   const base = unit === "mph" ? 200 : 300;
-  const scale = Math.max(base, Math.ceil(Math.max(v, top) / 50) * 50);
-  const frac = Math.min(1, v / scale);
-  const topFrac = Math.min(1, top / scale);
-  const arc = C * SWEEP;
-  const ticks = Array.from({ length: 11 }, (_, i) => i);
+  const scale = Math.max(base, Math.ceil(Math.max(value, peak) / 50) * 50);
+  const fraction = clamp01(value / scale);
+  const peakFraction = clamp01(peak / scale);
+  const arcLength = CIRCUMFERENCE * SWEEP;
+  const speedMarker = pointAt(174, fraction);
+  const ticks = Array.from({ length: 61 }, (_, index) => index);
+  const accent = sportsMode ? "#ff3b32" : "#19e6e6";
+  const endpointAccent = sportsMode ? "#ff7147" : "#7ef3ff";
 
   return (
-    <div className="relative mx-auto" style={{ width: SIZE, height: SIZE }}>
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="absolute inset-0">
+    <div className="speed-dial">
+      <svg
+        viewBox={`0 0 ${SIZE} ${SIZE}`}
+        className="speed-dial-svg"
+        role="img"
+        aria-label={`${Math.round(value)} ${unitLabel(unit)}, maximum scale ${scale}`}
+      >
         <defs>
-          <linearGradient id="dialGrad" x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0%" stopColor={sportsMode ? "#ff3b4f" : "#39ff88"} />
-            <stop offset="60%" stopColor={sportsMode ? "#ff7043" : "#19e6e6"} />
-            <stop offset="100%" stopColor={sportsMode ? "#ffb36b" : "#7ef3ff"} />
+          <radialGradient id="dialFace">
+            <stop offset="0%" stopColor="#111316" />
+            <stop offset="72%" stopColor="#0b0c0e" />
+            <stop offset="100%" stopColor="#17181a" />
+          </radialGradient>
+          <linearGradient id="dialTrack" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stopColor={accent} />
+            <stop offset="55%" stopColor={accent} />
+            <stop offset="100%" stopColor={endpointAccent} />
           </linearGradient>
-          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="b" />
+          <filter id="dialGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
             <feMerge>
-              <feMergeNode in="b" />
+              <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
         </defs>
-        <g transform={`rotate(135 ${SIZE / 2} ${SIZE / 2})`}>
-          <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none" stroke="#1b1e24" strokeWidth="16" strokeLinecap="round" strokeDasharray={`${arc} ${C}`} />
+
+        <circle cx={CENTER} cy={CENTER} r="202" fill="url(#dialFace)" stroke="#292b2e" strokeWidth="2" />
+        <circle cx={CENTER} cy={CENTER} r="196" fill="none" stroke="#55585b" strokeOpacity=".52" strokeWidth="1" />
+        <circle cx={CENTER} cy={CENTER} r="190" fill="none" stroke="#ff4a35" strokeOpacity=".13" strokeWidth="1" />
+        <circle cx={CENTER} cy={CENTER} r="174" fill="none" stroke="#282a2d" strokeWidth="12" strokeDasharray={`${arcLength} ${CIRCUMFERENCE}`} transform={`rotate(135 ${CENTER} ${CENTER})`} />
+        {fraction > 0 && (
           <circle
-            cx={SIZE / 2}
-            cy={SIZE / 2}
-            r={R}
+            cx={CENTER}
+            cy={CENTER}
+            r="174"
             fill="none"
-            stroke="url(#dialGrad)"
-            strokeWidth="16"
+            stroke="url(#dialTrack)"
+            strokeWidth="5"
             strokeLinecap="round"
-            strokeDasharray={`${Math.max(0.001, arc * frac)} ${C}`}
-            filter="url(#glow)"
-            style={{ transition: "stroke-dasharray 0.6s cubic-bezier(.2,.8,.2,1)" }}
+            strokeDasharray={`${arcLength * fraction} ${CIRCUMFERENCE}`}
+            transform={`rotate(135 ${CENTER} ${CENTER})`}
+            filter="url(#dialGlow)"
+            className="speed-dial-progress"
           />
-          {topFrac > 0 && (
-            <circle
-              cx={stableCoord(SIZE / 2 + R * Math.cos(topFrac * SWEEP * 2 * Math.PI))}
-              cy={stableCoord(SIZE / 2 + R * Math.sin(topFrac * SWEEP * 2 * Math.PI))}
-              r="5"
-              fill="#ffc21a"
-            />
-          )}
-        </g>
-        {ticks.map((i) => {
-          const ang = ((135 + (i / 10) * 270) * Math.PI) / 180;
-          const r1 = R - 22;
-          const r2 = R - (i % 5 === 0 ? 34 : 28);
-          const cx = SIZE / 2;
-          const x1 = stableCoord(cx + r1 * Math.cos(ang));
-          const y1 = stableCoord(cx + r1 * Math.sin(ang));
-          const x2 = stableCoord(cx + r2 * Math.cos(ang));
-          const y2 = stableCoord(cx + r2 * Math.sin(ang));
+        )}
+        <circle cx={CENTER} cy={CENTER} r="151" fill="none" stroke="#35373a" strokeWidth="1.2" />
+        <circle cx={CENTER} cy={CENTER} r="126" fill="none" stroke="#ff4935" strokeOpacity=".52" strokeWidth="1" />
+        <circle cx={CENTER} cy={CENTER} r="119" fill="none" stroke="#ffffff" strokeOpacity=".05" strokeWidth="1" />
+
+        {ticks.map((index) => {
+          const tickFraction = index / 60;
+          const major = index % 6 === 0;
+          const medium = index % 3 === 0;
+          const innerRadius = major ? 147 : medium ? 153 : 159;
+          const outerRadius = 168;
+          const inner = pointAt(innerRadius, tickFraction);
+          const outer = pointAt(outerRadius, tickFraction);
+          const passed = tickFraction <= fraction;
+          const tickColor = passed ? (sportsMode ? "#ff6951" : "#32e8dc") : major ? "#d9dadd" : "#73767a";
+
           return (
-            <g key={i}>
-              <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={i / 10 <= frac ? (sportsMode ? "#ff7043" : "#19e6e6") : "#3a3f48"} strokeWidth="2" />
-              {i % 2 === 0 && (
-                <text x={stableCoord(cx + (R - 50) * Math.cos(ang))} y={stableCoord(cx + (R - 50) * Math.sin(ang) + 4)} textAnchor="middle" fontSize="11" fill="#6b717c" className="tabular">
-                  {Math.round((i / 10) * scale)}
+            <g key={index}>
+              {passed && major && (
+                <line
+                  x1={inner.x}
+                  y1={inner.y}
+                  x2={outer.x}
+                  y2={outer.y}
+                  stroke={tickColor}
+                  strokeWidth="5"
+                  opacity=".28"
+                  filter="url(#dialGlow)"
+                />
+              )}
+              <line
+                x1={inner.x}
+                y1={inner.y}
+                x2={outer.x}
+                y2={outer.y}
+                stroke={tickColor}
+                strokeWidth={major ? 2.6 : medium ? 1.5 : 0.8}
+                strokeOpacity={passed || major ? 0.95 : medium ? 0.65 : 0.42}
+              />
+              {major && (
+                <text
+                  x={pointAt(132, tickFraction).x}
+                  y={pointAt(132, tickFraction).y + 5}
+                  textAnchor="middle"
+                  className={`speed-dial-label${passed ? " speed-dial-label-active" : ""}`}
+                >
+                  {Math.round(tickFraction * scale)}
                 </text>
               )}
             </g>
           );
         })}
+
+        {peakFraction > 0 && (() => {
+          const marker = pointAt(174, peakFraction);
+          return <circle cx={marker.x} cy={marker.y} r="4.5" fill="#ffd15a" stroke="#fff1b1" strokeWidth="1" filter="url(#dialGlow)" />;
+        })()}
+
+        <circle
+          cx={speedMarker.x}
+          cy={speedMarker.y}
+          r="12"
+          fill={accent}
+          opacity=".45"
+          filter="url(#dialGlow)"
+          className="speed-dial-marker-glow"
+        />
+        <circle
+          cx={speedMarker.x}
+          cy={speedMarker.y}
+          r="6"
+          fill={endpointAccent}
+          stroke="#fff1e8"
+          strokeWidth="1.5"
+          filter="url(#dialGlow)"
+          className="speed-dial-marker"
+        />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className={`text-[84px] leading-none font-extrabold tabular tracking-tight ${active ? "text-white text-glow" : "text-white/80"}`}>
-          {Math.round(v)}
-        </div>
-        <div className={`mt-1 text-sm font-semibold tracking-[0.3em] uppercase ${sportsMode ? "text-danger" : "text-neon"}`}>{unitLabel(unit)}</div>
+
+      <div className="speed-dial-readout" aria-hidden="true">
+        <span className="speed-dial-unit">{unitLabel(unit)}</span>
+        <span className={`speed-dial-value${active ? " speed-dial-value-active" : ""}`}>{Math.round(value)}</span>
+        <span className={`speed-dial-status${sportsMode ? " speed-dial-status-sports" : ""}`}>{active ? "LIVE" : "TRIPRANK"}</span>
       </div>
     </div>
   );

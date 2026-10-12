@@ -36,27 +36,28 @@ export default function LeaderboardPage() {
   const order = [podium[1], podium[0], podium[2]];
 
   return (
-    <div className="px-4 pt-6">
-      <header className="flex items-end justify-between">
+    <div className="leaderboard-page px-4 pt-5">
+      <header className="leaderboard-header">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Leaderboard</h1>
-          <p className="text-xs text-muted">Top speed · {data ? `${data.total} drivers ranked` : "loading…"}</p>
+          <h1 className="section-brand">TRIP<span>RANK</span></h1>
+          <p className="text-xs text-muted">TOP SPEED · {data ? `${data.total} DRIVERS RANKED` : "LOADING RANKS…"}</p>
         </div>
         {data && (
-          <span className="rounded-full border border-line px-2 py-1 text-[10px] font-semibold tracking-widest text-muted uppercase">
-            {data.backend === "redis" ? "⚡ Redis ZSET" : "PG fallback"}
+          <span className="rounded-full border border-line px-2 py-1 text-[9px] font-semibold tracking-widest text-muted uppercase">
+            {data.backend === "redis" ? "LIVE RANKS" : "RANKS"}
           </span>
         )}
       </header>
 
-      <div className="mt-4 grid grid-cols-2 rounded-full border border-line bg-panel p-1 text-sm font-semibold">
-        <button onClick={() => setScope("global")} className={`rounded-full py-2 ${scope === "global" ? "bg-neon text-black" : "text-muted"}`}>
+      <div className="scope-switch mt-5 grid grid-cols-2 text-sm font-semibold">
+        <button aria-pressed={scope === "global"} onClick={() => setScope("global")} className="py-2">
           Global
         </button>
         <button
+          aria-pressed={scope === "country"}
           onClick={() => setScope("country")}
           disabled={!profile || profile.country === "Global"}
-          className={`rounded-full py-2 disabled:opacity-40 ${scope === "country" ? "bg-neon text-black" : "text-muted"}`}
+          className="py-2 text-muted disabled:opacity-40"
         >
           {profile?.country && profile.country !== "Global" ? profile.country : "My Country"}
         </button>
@@ -68,20 +69,24 @@ export default function LeaderboardPage() {
         <div className="card mt-6 p-8 text-center text-muted">No trips yet. Be the first to set a record!</div>
       ) : (
         <>
-          <section className="mt-8 grid grid-cols-3 items-end gap-2">
+          <section className="podium-grid mt-7 grid grid-cols-3 items-end">
             {order.map((e, i) =>
               e ? (
-                <div key={e.userId} className="flex flex-col items-center">
-                  <div className={`mb-2 flex h-14 w-14 items-center justify-center rounded-full text-xl font-black ${e.rank === 1 ? "bg-gold text-black" : e.rank === 2 ? "bg-zinc-300 text-black" : "bg-amber-700 text-white"}`}>
-                    {e.username.slice(0, 1).toUpperCase()}
+                <div key={e.userId} className="podium-person">
+                  <div className={`podium-avatar podium-avatar-${e.rank}`}>
+                    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="currentColor" aria-hidden="true">
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M4.5 21a7.5 7.5 0 0 1 15 0z" />
+                    </svg>
                   </div>
                   <div className="max-w-full truncate text-sm font-semibold">@{e.username}</div>
-                  <div className="text-xs text-neon tabular">{formatSpeed(e.topSpeedKmh, unit)}</div>
+                  {e.car && <div className="max-w-full truncate text-[10px] text-muted">{e.car}</div>}
+                  <div className="podium-speed tabular">{formatSpeed(e.topSpeedKmh, unit)}</div>
                   <div
-                    className={`card mt-2 flex w-full items-start justify-center rounded-b-none pt-2 text-2xl font-black ${e.userId === profile?.id ? "border-neon/50" : ""}`}
-                    style={{ height: i === 1 ? 110 : i === 0 ? 80 : 60 }}
+                    className={`podium-block podium-block-${e.rank} ${e.userId === profile?.id ? "border-danger" : ""}`}
+                    style={{ height: i === 1 ? 116 : i === 0 ? 86 : 66 }}
                   >
-                    <span className={e.rank === 1 ? "text-gold" : "text-white/70"}>{e.rank}</span>
+                    {e.rank === 1 ? "1st" : e.rank === 2 ? "2nd" : "3rd"}
                   </div>
                 </div>
               ) : (
@@ -89,9 +94,9 @@ export default function LeaderboardPage() {
               )
             )}
           </section>
-          <ol className="card divide-y divide-white/5 overflow-hidden">
+          <ol className="rank-list card mt-4 divide-y divide-white/5 overflow-hidden">
             {rest.map((e) => (
-              <li key={e.userId} className={`flex items-center gap-3 px-4 py-3 ${e.userId === profile?.id ? "bg-neon/10" : ""}`}>
+              <li key={e.userId} className={`rank-list-item flex items-center gap-3 px-4 py-3 ${e.userId === profile?.id ? "rank-list-item-current" : ""}`}>
                 <span className="w-7 text-center text-sm font-bold text-muted tabular">{e.rank}</span>
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">@{e.username}</div>

@@ -6,6 +6,7 @@ import { toBlob } from "html-to-image";
 import SpeedChart from "@/components/SpeedChart";
 import RouteMap from "@/components/RouteMap";
 import VideoOverlay from "@/components/VideoOverlay";
+import ActivityIcon from "@/components/ActivityIcon";
 import { useProfile, useUnit } from "@/lib/client/profile";
 import { TRIP_MODE_DETAILS, paceBandLabels, paceLabel, type TripMode } from "@/lib/modes";
 import {
@@ -135,7 +136,7 @@ export default function TripSummary({ trip }: { trip: TripView }) {
         <section className="pt-2 pb-2 text-center">
           <h1 className="wordmark text-5xl">TripRank</h1>
           <p className="mt-2 text-xs text-muted">
-            <span className="mr-1">{modeDetails.icon} {modeDetails.label}</span>
+            <span className="mr-1 inline-flex items-center gap-1"><ActivityIcon mode={trip.mode} className="h-4 w-4 text-danger" />{modeDetails.label}</span>
             · @{trip.user.username}
             {trip.user.car ? ` · ${trip.user.car}` : ""} · {new Date(trip.startedAt).toLocaleDateString()}
             {trip.isSimulated && <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] text-gold">DEMO</span>}

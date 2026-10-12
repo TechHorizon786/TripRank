@@ -35,7 +35,7 @@ export default function BottomNav() {
               <Link
                 href={it.href}
                 className={`flex flex-col items-center gap-1 px-4 py-1 text-[11px] font-medium transition ${
-                  active ? "text-neon" : "text-muted hover:text-white"
+                  active ? "bottom-nav-active text-white" : "text-muted hover:text-white"
                 }`}
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">

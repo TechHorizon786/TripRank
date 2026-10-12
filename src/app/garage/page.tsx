@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useProfile, useUnit } from "@/lib/client/profile";
 import { formatDistance, formatDuration, formatSpeed } from "@/lib/metrics";
 import Onboarding from "@/components/Onboarding";
+import ActivityIcon from "@/components/ActivityIcon";
 import { isTripMode, TRIP_MODE_DETAILS, type TripMode } from "@/lib/modes";
 
 type TripRow = {
@@ -41,38 +42,38 @@ export default function GaragePage() {
   const bestG = sportsTrips.reduce((m, t) => Math.max(m, t.maxGForce), 0);
 
   return (
-    <div className="space-y-4 px-4 pt-6">
-      <header className="flex items-center gap-4">
-        <div className="neon-glow flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-lime to-neon text-2xl font-black text-black">
-          {profile.username.slice(0, 1).toUpperCase()}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-2xl font-extrabold">@{profile.username}</h1>
-          <p className="truncate text-sm text-muted">
-            {profile.country}
-            {profile.car ? ` · ${profile.car}` : ""}
-          </p>
+    <div className="garage-page space-y-4 px-4 pt-5">
+      <header className="garage-hero">
+        <svg className="garage-hero-car" viewBox="0 0 320 100" fill="none" aria-hidden="true">
+          <path d="M19 67h18l17-22c5-7 12-11 22-13l66-13c10-2 20-1 29 3l42 19 43 8c12 2 21 9 27 18h15c7 0 12 6 12 13v7H17v-9c0-6 1-11 2-11Z" stroke="currentColor" strokeWidth="3" />
+          <path d="m75 43 79-15c12-2 23-1 34 4l34 17H62l13-6Z" stroke="currentColor" strokeWidth="2" />
+          <path d="M53 77a18 18 0 1 0 36 0m126 0a18 18 0 1 0 36 0" stroke="currentColor" strokeWidth="4" />
+          <path d="M17 70h27m226 0h31" stroke="#ff5a54" strokeWidth="4" />
+        </svg>
+        <div className="garage-driver">
+          <div className="garage-avatar">{profile.username.slice(0, 1).toUpperCase()}</div>
+          <div className="min-w-0 flex-1">
+            <h1 className="garage-username truncate">@{profile.username}</h1>
+            <p className="garage-car-name truncate">{profile.car || profile.country}</p>
+            <p className="garage-car-name truncate">{profile.car ? profile.country : "TRIPRANK DRIVER"}</p>
+          </div>
+          <div className="garage-unit-switch flex rounded-full border border-line bg-panel p-1 text-[10px] font-bold">
+            {(["kmh", "mph"] as const).map((u) => (
+              <button key={u} onClick={() => setUnit(u)} className={`rounded-full px-2 py-1 ${unit === u ? "bg-danger text-white" : "text-muted"}`}>
+                {u === "kmh" ? "KM/H" : "MPH"}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
-      <section className="card grid grid-cols-3 divide-x divide-white/5 py-4 text-center">
-        <div><div className="text-lg font-bold text-danger tabular">{formatSpeed(best, unit)}</div><div className="text-[10px] tracking-widest text-muted uppercase">Sports PB</div></div>
-        <div><div className="text-lg font-bold tabular">{formatDistance(totalKm, unit)}</div><div className="text-[10px] tracking-widest text-muted uppercase">Total</div></div>
-        <div><div className="text-lg font-bold tabular">{bestG.toFixed(2)} G</div><div className="text-[10px] tracking-widest text-muted uppercase">Peak G</div></div>
+      <section className="garage-stats">
+        <div className="garage-stat"><div className="garage-stat-label">Sports PB</div><div className="garage-stat-value text-danger">{formatSpeed(best, unit)}</div></div>
+        <div className="garage-stat"><div className="garage-stat-label">Total distance</div><div className="garage-stat-value">{formatDistance(totalKm, unit)}</div></div>
+        <div className="garage-stat"><div className="garage-stat-label">Peak G-force</div><div className="garage-stat-value">{bestG.toFixed(2)} G</div></div>
       </section>
 
-      <section className="card flex items-center justify-between px-4 py-3">
-        <span className="text-sm">Units</span>
-        <div className="flex rounded-full border border-line bg-panel-2 p-1 text-xs font-semibold">
-          {(["kmh", "mph"] as const).map((u) => (
-            <button key={u} onClick={() => setUnit(u)} className={`rounded-full px-3 py-1 ${unit === u ? "bg-neon text-black" : "text-muted"}`}>
-              {u === "kmh" ? "KM/H" : "MPH"}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <h2 className="pt-2 text-sm font-semibold tracking-widest text-muted uppercase">Trip History</h2>
+      <div className="garage-history-heading pt-2"><h2>Trip History</h2><span className="text-xs text-muted">{trips?.length ?? "—"} trips</span></div>
       {trips === null ? (
         <p className="text-muted">Loading…</p>
       ) : trips.length === 0 ? (
@@ -80,27 +81,27 @@ export default function GaragePage() {
           No trips yet. <Link href="/" className="text-neon">Start your first drive →</Link>
         </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="garage-trip-list">
           {trips.map((t) => {
             const mode: TripMode = isTripMode(t.mode) ? t.mode : "sports";
             const details = TRIP_MODE_DETAILS[mode];
             return (
-              <li key={t.id}>
-                <Link href={`/trip/${t.id}`} className="card flex items-center gap-3 px-4 py-3 transition hover:border-neon/40">
-                  <div className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-panel-2 text-[10px] text-muted">
-                    <span className="text-base leading-none font-bold text-white">{new Date(t.startedAt).getDate()}</span>
+              <li key={t.id} className="garage-trip-item">
+                <Link href={`/trip/${t.id}`} className="garage-trip-card transition hover:border-danger/50">
+                  <div className="garage-trip-top">
+                    <div className="garage-date-tile text-[9px] text-muted">
+                    <span className="text-sm leading-none font-bold text-white">{new Date(t.startedAt).getDate()}</span>
                     {new Date(t.startedAt).toLocaleString(undefined, { month: "short" })}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold">
-                      {details.icon} {details.label} · {formatDistance(t.distanceKm, unit)} · {formatDuration(t.durationSec)}
-                      {t.isSimulated === 1 && <span className="ml-2 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] text-gold">DEMO</span>}
+                    <ActivityIcon mode={mode} className="garage-trip-icon h-6 w-6" />
+                    <div className="min-w-0">
+                      <div className="garage-trip-mode">{details.label}</div>
+                      <div className="garage-trip-meta">{formatDistance(t.distanceKm, unit)} · {formatDuration(t.durationSec)}</div>
                     </div>
-                    <div className="text-xs text-muted">avg {formatSpeed(t.avgSpeedKmh, unit)}{mode === "sports" ? ` · ${t.maxGForce.toFixed(2)} G` : ""}</div>
                   </div>
-                  <div className="text-right">
-                    <div className={`font-bold tabular ${mode === "sports" ? "text-danger" : "text-neon"}`}>{formatSpeed(t.topSpeedKmh, unit)}</div>
-                    <div className="text-[10px] text-muted">{mode === "sports" ? "top" : "peak"}</div>
+                  <div className="garage-trip-speed">
+                    <span className="font-bold tabular">{formatSpeed(t.topSpeedKmh, unit)} max</span>
+                    {t.isSimulated === 1 && <span className="rounded bg-danger/20 px-1.5 py-0.5 text-[9px] font-bold text-danger">DEMO</span>}
                   </div>
                 </Link>
               </li>
@@ -113,9 +114,9 @@ export default function GaragePage() {
         onClick={() => {
           if (confirm("Sign out of this driver profile on this device?")) save(null);
         }}
-        className="w-full py-4 text-sm text-muted hover:text-danger"
+        className="switch-driver-button"
       >
-        Switch driver
+        ↔ &nbsp; Switch driver
       </button>
     </div>
   );
