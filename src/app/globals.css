@@ -462,8 +462,8 @@ body {
 .garage-stat-value { overflow: hidden; color: #f5f5f6; font-size: clamp(0.85rem, 4vw, 1.15rem); font-style: italic; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
 .garage-history-heading { display: flex; align-items: baseline; justify-content: space-between; }
 .garage-history-heading h2 { color: #d4d5d9; font-size: 0.9rem; font-style: italic; font-weight: 900; letter-spacing: 0.06em; text-transform: uppercase; }
-.garage-trip-list { display: flex; gap: 0.65rem; overflow-x: auto; padding: 0.1rem 0 0.7rem; scrollbar-width: thin; }
-.garage-trip-item { width: min(78vw, 15rem); flex: 0 0 auto; }
+.garage-trip-list { display: flex; flex-direction: column; gap: 0.65rem; padding: 0.1rem 0 0.7rem; }
+.garage-trip-item { width: 100%; }
 .garage-trip-card {
   display: flex;
   min-height: 7.5rem;
