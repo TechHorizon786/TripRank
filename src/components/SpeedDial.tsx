@@ -7,8 +7,9 @@ type Props = { speedKmh: number; maxKmh: number; unit: Unit; active: boolean; sp
 const SIZE = 420;
 const CENTER = SIZE / 2;
 const R = 184;
+const TRACK_RADIUS = 174;
 const SWEEP = 0.75;
-const CIRCUMFERENCE = 2 * Math.PI * R;
+const CIRCUMFERENCE = 2 * Math.PI * TRACK_RADIUS;
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 const stableCoord = (value: number) => Number(value.toFixed(3));
 
@@ -28,8 +29,7 @@ export default function SpeedDial({ speedKmh, maxKmh, unit, active, sportsMode =
   const fraction = clamp01(value / scale);
   const peakFraction = clamp01(peak / scale);
   const arcLength = CIRCUMFERENCE * SWEEP;
-  const markerRadius = 176;
-  const speedMarker = pointAt(markerRadius, fraction);
+  const speedMarker = pointAt(TRACK_RADIUS, fraction);
   const ticks = Array.from({ length: 61 }, (_, index) => index);
   const accent = sportsMode ? "#ff3b32" : "#19e6e6";
   const endpointAccent = sportsMode ? "#ff7147" : "#7ef3ff";
@@ -65,12 +65,12 @@ export default function SpeedDial({ speedKmh, maxKmh, unit, active, sportsMode =
         <circle cx={CENTER} cy={CENTER} r="202" fill="url(#dialFace)" stroke="#292b2e" strokeWidth="2" />
         <circle cx={CENTER} cy={CENTER} r="196" fill="none" stroke="#55585b" strokeOpacity=".52" strokeWidth="1" />
         <circle cx={CENTER} cy={CENTER} r="190" fill="none" stroke="#ff4a35" strokeOpacity=".13" strokeWidth="1" />
-        <circle cx={CENTER} cy={CENTER} r="174" fill="none" stroke="#282a2d" strokeWidth="12" strokeDasharray={`${arcLength} ${CIRCUMFERENCE}`} transform={`rotate(135 ${CENTER} ${CENTER})`} />
+        <circle cx={CENTER} cy={CENTER} r={TRACK_RADIUS} fill="none" stroke="#282a2d" strokeWidth="12" strokeDasharray={`${arcLength} ${CIRCUMFERENCE}`} transform={`rotate(135 ${CENTER} ${CENTER})`} />
         {fraction > 0 && (
           <circle
             cx={CENTER}
             cy={CENTER}
-            r="174"
+            r={TRACK_RADIUS}
             fill="none"
             stroke="url(#dialTrack)"
             strokeWidth="5"
@@ -134,26 +134,26 @@ export default function SpeedDial({ speedKmh, maxKmh, unit, active, sportsMode =
         })}
 
         {peakFraction > 0 && (() => {
-          const marker = pointAt(markerRadius, peakFraction);
+          const marker = pointAt(TRACK_RADIUS, peakFraction);
           return <circle cx={marker.x} cy={marker.y} r="4" fill="#ffd15a" stroke="#fff1b1" strokeWidth="1" filter="url(#dialGlow)" />;
         })()}
 
         <circle
           cx={speedMarker.x}
           cy={speedMarker.y}
-          r="8"
+          r="12"
           fill={accent}
-          opacity=".35"
+          opacity=".45"
           filter="url(#dialGlow)"
           className="speed-dial-marker-glow"
         />
         <circle
           cx={speedMarker.x}
           cy={speedMarker.y}
-          r="4.5"
+          r="6"
           fill={endpointAccent}
           stroke="#fff1e8"
-          strokeWidth="1.2"
+          strokeWidth="1.5"
           filter="url(#dialGlow)"
           className="speed-dial-marker"
         />
