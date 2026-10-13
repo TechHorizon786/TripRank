@@ -28,7 +28,7 @@ export default function SpeedDial({ speedKmh, maxKmh, unit, active, sportsMode =
   const fraction = clamp01(value / scale);
   const peakFraction = clamp01(peak / scale);
   const arcLength = CIRCUMFERENCE * SWEEP;
-  const markerRadius = R - 2;
+  const markerRadius = 176;
   const speedMarker = pointAt(markerRadius, fraction);
   const ticks = Array.from({ length: 61 }, (_, index) => index);
   const accent = sportsMode ? "#ff3b32" : "#19e6e6";
@@ -74,7 +74,7 @@ export default function SpeedDial({ speedKmh, maxKmh, unit, active, sportsMode =
             fill="none"
             stroke="url(#dialTrack)"
             strokeWidth="5"
-            strokeLinecap="round"
+            strokeLinecap="butt"
             strokeDasharray={`${arcLength * fraction} ${CIRCUMFERENCE}`}
             transform={`rotate(135 ${CENTER} ${CENTER})`}
             filter="url(#dialGlow)"
